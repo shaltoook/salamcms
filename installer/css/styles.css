@@ -1,7 +1,45 @@
-Body {
+BODY {
 	background: #3b3838;
 	padding: 0px;
 	margin: 0px;
 	font-family: Tahoma;
 	font-size: 12px;
+}
+#wrapper {
+	width: 85%;
+	margin: 50px auto 10px auto;
+}
+#mainStage {
+	background: #FFF;
+	display: flex;
+	justify-content: space-between;
+	overflow: hidden;
+}
+#mainSide {
+	width: 30%;
+	background: #5b9bd5;
+}
+#mainSideLogo {
+	display: flex;
+	justify-content: space-around;
+	color: #f2f2f2;
+	margin: 40px auto;
+	align-items: center;
+	font-size: 24px;
+	width: 40%;
+}
+#logoSVG svg {
+	filter: brightness(0) invert(1);
+	height: 35px;
+	width: 35px;
+}
+#mainBody {}
+#footer {
+	display: flex;
+	justify-content: space-between;
+	color: #bfbfbf;
+	line-height: 35px;
+}
+#websiteURL {
+	color: #bfbfbf;
 }
