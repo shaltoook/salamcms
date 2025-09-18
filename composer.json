@@ -1,0 +1,7 @@
+{
+    "name": "shaltoook/salamcms",
+    "description": "Headless CMS in PHP",
+    "require": {
+        "php": ">=7.4 <8.0"
+    }
+}
