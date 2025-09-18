@@ -3,10 +3,10 @@ BODY {
 	padding: 0px;
 	margin: 0px;
 	font-family: Tahoma;
-	font-size: 12px;
+	font-size: 14px;
 }
 #wrapper {
-	width: 85%;
+	width: 80%;
 	margin: 50px auto 10px auto;
 }
 #mainStage {
@@ -26,19 +26,89 @@ BODY {
 	margin: 40px auto;
 	align-items: center;
 	font-size: 24px;
-	width: 40%;
+	width: 45%;
 }
 #logoSVG svg {
 	filter: brightness(0) invert(1);
 	height: 35px;
 	width: 35px;
 }
-#mainBody {}
+#mainSideMenu {
+	width: 80%;
+	margin: 0px auto 20px auto;
+}
+.menuItem {
+	color: #FFF;
+	border-bottom: 1px solid #d9d9d9;
+	line-height: 35px;
+	padding: 10px 8px;
+	font-size: 14px;
+}
+.menuItem:last-of-type {
+	border-bottom: none;
+}
+.passedMenu, .currentMenu {
+	color: #262626;
+}
+.currentMenu span:before,
+.normalMenu span:before {
+	content: '○';
+	font-size: 18px;
+	margin-right: 5px;
+}
+
+.passedMenu span:before {
+	content: '●';
+	font-size: 18px;
+	margin-right: 5px;
+}
+
+#mainBody {
+	padding: 25px 35px;
+	width: 70%;
+}
+#mainBodyHead {
+	padding: 5px 10px;
+	line-height: 40px;
+	border-bottom: 2px solid #d9d9d9;
+	color: #a6a6a6;
+	font-size: 18px;
+}
+#mainBodyContent{
+	min-height: 400px;
+	padding: 10px;
+	box-sizing: border-box;
+}
+#mainBodyContent {
+	
+}
+#mainBodyBtns{
+display: flex;
+  justify-content: end;
+  padding: 10px 0px;
+  align-items: center;
+  
+}
+#mainBodyBtns a {
+	margin-inline-end: 30px;
+	color: #333;
+	font-size: 16px;
+}
+#mainBodyBtns button {
+	background: #5b9bd5;
+	color: #FFF;
+	border: none;
+	padding: 6px 25px;
+	font-size: 16px;
+	cursor: pointer;
+}
+
 #footer {
 	display: flex;
 	justify-content: space-between;
 	color: #bfbfbf;
 	line-height: 35px;
+	font-size: 12px;
 }
 #websiteURL {
 	color: #bfbfbf;

@@ -26,9 +26,34 @@ $dict = get_dict();
 					<div id="logoSVG"><?php echo get_logo(); ?></div>
 					<?php echo $CFG['brand']; ?>
 				</div>
+				<div id="mainSideMenu">
+				<?php
+					$menuItems = array(
+						1 => get_string('salam'),
+						2 => get_string('projectinfo'),
+						3 => get_string('downloadfiles'),
+						4 => get_string('dbconnections'),
+						5 => get_string('adminuser'),
+						6 => get_string('additionalpackages'),
+						7 => get_string('bye')
+					);
+					show_menu($menuItems);
+				?>
+				</div>
 			</div>
 			<div id="mainBody">
-
+				<div id="mainBodyHead">
+				<?php echo $menuItems[1]; ?>
+				</div>
+				
+				<div id="mainBodyContent">
+					<p>Welcome to Salam CMS!<br>Please select language and CMS version to continue.</p>
+				</div>
+				
+				<div id="mainBodyBtns">
+					<a href="#">Back</a>
+					<button>Next</button>
+				</div>
 			</div>
 		</div>
 		<div id="footer">

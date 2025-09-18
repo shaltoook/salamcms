@@ -39,6 +39,21 @@ function get_logo() {
 </svg>';
 }
 
+function show_menu($items, $active_level = 1) {
+	foreach($items as $level => $item) {
+		$menu_class = 'normalMenu';
+		if($active_level > $level) {
+			$menu_class = 'passedMenu';
+		} elseif($active_level == $level) {
+			$menu_class = 'currentMenu';
+		}
+
+		echo '<div class="menuItem '.$menu_class .'">';
+		echo '<span>'.$item.'</span>';
+		echo '</div>';
+	}
+}
+
 function get_dict() {
 	$cssDir = __DIR__ . '/lang/';
 	$cssFiles = glob($cssDir . '/*.php');
