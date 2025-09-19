@@ -17,8 +17,14 @@ $string['back'] = 'Back';
 $string['next'] = 'Next';
 
 $string['level1note'] = 'Welcome to Salam CMS!<br>Please select language and CMS version to continue.';
+$string['level2note'] = 'Please enter the project info.';
 $string['language'] = 'Language';
 $string['cmsversion'] = 'CMS version';
+$string['projectname'] = 'Project name';
+$string['url'] = 'URL';
+$string['wwwroot'] = 'WWW root';
+$string['dataroot'] = 'Data root';
+$string['validate'] = 'Validate';
 
 $string['phpversionerror'] = 'Your PHP version is {v1}, but the selected version requires PHP version {v2}+';
 ?>

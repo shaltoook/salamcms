@@ -124,6 +124,7 @@ display: flex;
 .inputDiv {
 	display: flex;
 	justify-content: start;
+	align-items: center;
 }
 .selectInput {
 	border: 1px solid #7f7f7f;
@@ -132,6 +133,18 @@ display: flex;
 	background: #FFF;
 	padding: 0px 5px;
 	outline: none;
+}
+.textInput {
+	border: 1px solid #7f7f7f;
+	width: 350px;
+	height: 35px;
+	background: #FFF;
+	padding: 0px 5px;
+	outline: none;
+	color: #999;
+}
+.textInput:focus {
+	color: #000;
 }
 
 .alert {
@@ -142,4 +155,11 @@ display: flex;
 .errorAlert {
 	border-color: #c00000;
 	background: #ffcccc;
+}
+
+.extraLink {
+	margin-inline-start: 20px;
+	color: #7f7f7f;
+	text-decoration: underline;
+	cursor: pointer;
 }

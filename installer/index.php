@@ -4,6 +4,7 @@ session_start();
 //ini_set('display_errors', true);
 include('config.php');
 include('functions.php');
+include('functions_local.php');
 
 if(req('lang')) {
 	set_sess('lang', req('lang'));
@@ -14,7 +15,12 @@ $dir = get_dir();
 $dict = get_dict();
 
 if(req('ajax')) {
-	
+	$functionName = 'ajax_' . req('action');
+	if (function_exists($functionName)) {
+		$result = $functionName();
+		echo json_encode($result);
+	}
+	die();
 }
 if(req('clevel')) {
 	if(sess('current_level') > req('clevel'))
@@ -35,10 +41,10 @@ $clevel = get_current_level();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
 	<title><?php echo get_string('title'); ?></title>
-<?php
-	load_css_files();
-	load_js_files();
-?>
+	<!-- LOAD_CSS_FILES_HERE -->
+	<?php load_css_files(); ?>
+	<!-- LOAD_JS_FILES_HERE -->
+	<?php load_js_files(); ?>
 </head>
 <body>
 	<div id="wrapper">
@@ -57,7 +63,7 @@ $clevel = get_current_level();
 			</div>
 			<div id="mainBody">
 				<div id="mainBodyHead">
-				<?php echo $menuItems[1]; ?>
+				<?php echo $menuItems[$clevel]; ?>
 				</div>
 				<form action="" method="post" >
 					<?php 

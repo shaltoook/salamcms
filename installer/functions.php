@@ -1,22 +1,4 @@
 <?php
-function load_css_files() {
-	$cssDir = __DIR__ . '/css/';
-	$cssFiles = glob($cssDir . '/*.css');
-
-	foreach ($cssFiles as $file) {
-		echo '<link href="css/'.basename($file).'" rel="stylesheet">'.PHP_EOL;
-	}
-}
-
-function load_js_files() {
-	$cssDir = __DIR__ . '/js/';
-	$cssFiles = glob($cssDir . '/*.js');
-
-	foreach ($cssFiles as $file) {
-		echo '<script src="js/'.basename($file).'"></script>'.PHP_EOL;
-	}
-}
-
 function get_logo() {
 	return '<svg
    width="70.556221mm"
@@ -52,21 +34,6 @@ function show_menu($items, $active_level = 1) {
 		echo '<span>'.$item.'</span>';
 		echo '</div>';
 	}
-}
-
-function get_dict() {
-	$cssDir = __DIR__ . '/lang/';
-	$cssFiles = glob($cssDir . '/*.php');
-
-	$output = array();
-
-	foreach ($cssFiles as $file) {
-		$lang = explode('.',basename($file))[0];
-		include('lang/'.basename($file));
-		$output[$lang] = $string;
-	}
-	
-	return $output;
 }
 
 function get_string($key, $var = array()) {
@@ -127,25 +94,22 @@ function get_level_1() {
 		'en' => get_string('en')
 	);
 	$e->value = $lang;
-	
 	$output .= form_input($e); 
 	
 	$e = new stdClass();
 	$e->type = 'select';
 	$e->label = get_string('cmsversion');
 	$e->name = 'version';
-	
 	$options = array();
 	$versions = get_versions();
 	foreach($versions as $version) {
 		$options[$version['id']] = $version['title'];
 	}
 	$e->options = $options;
-	
 	if(sess('version'))
 		$e->value = sess('version');
-	
 	$output .= form_input($e); 
+	
 	$output .= '</div>';
 	echo $output;
 }
@@ -174,8 +138,56 @@ function show_notifications() {
 	}
 }
 
-function get_level_2() {
-	echo 'level2';
+function get_base_url() {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    $host = $_SERVER['HTTP_HOST'];
+    return $protocol . $host;
+}
+
+function get_www_root() {
+    return __DIR__;
+}
+
+function get_data_root() {
+    return __DIR__;
+}
+
+function get_level_2() {	
+	$output = '<p>'.get_string('level2note').'</p>';
+	$output .= '<div id="formWrapper">';
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('projectname');
+	$e->name = 'project_name';
+	if(sess('project_name')) $e->value = sess('project_name');
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('url');
+	$e->name = 'url';
+	$e->value = (sess('url')) ?: get_base_url();
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('wwwroot');
+	$e->name = 'www_root';
+	$e->value = (sess('www_root')) ?: get_www_root();
+	$e->additional = '<span class="extraLink" id="wwwrootValidator">'.get_string('validate').'</span>';
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('dataroot');
+	$e->name = 'data_root';
+	$e->value = (sess('data_root')) ?: get_data_root();
+	$e->additional = '<span class="extraLink" id="datarootValidator">'.get_string('validate').'</span>';
+	$output .= form_input($e); 
+	
+	$output .= '</div>';
+	echo $output;
 }
 
 function show_body_content() {
@@ -196,9 +208,21 @@ function form_input($e) {
 		case 'select':
 			$output .= select_input($e);
 			break;
+		case 'text':
+			$output .= text_input($e);
+			break;
 	}
+	if(isset($e->additional))
+		$output .= $e->additional;
 	$output .= '</div>';
 	$output .= '</div>';
+	
+	return $output;
+}
+
+function text_input($e) {
+	$value = (isset($e->value) && $e->value !='') ? $e->value : '';
+	$output = '<input type="text" name="'.$e->name.'" class="textInput" value="'.$value.'" >';
 	
 	return $output;
 }
@@ -209,7 +233,7 @@ function select_input($e) {
 		$output .= '<option value="'.$value.'">'.$title.'</option>';
 	}
 	$output .= '</select>';
-	if($e->value && $e->value !='')
+	if(isset($e->value) && $e->value !='')
 		$output .= '<script>set_input_value("'.$e->name.'","'.$e->value.'")</script>';
 	
 	return $output;
@@ -236,6 +260,21 @@ function check_php_version($php_ver) {
 		set_sess('error', get_string('phpversionerror', ['v1'=>PHP_VERSION , 'v2'=>$php_ver]));
 		return false;
 	}
+}
+
+function ajax_path_validator() {
+	$output = array();
+	$output['path'] = req('path');
+	if(is_dir(req('path'))) {
+		if (is_readable(req('path'))) {
+			$output['message'] = 'Path is OK.';
+		} else {
+			$output['message'] = "Path is not readable.";
+		}
+	} else {
+		$output['message'] = 'Path is not OK.';
+	}
+	return $output;
 }
 
 function get_versions() {
