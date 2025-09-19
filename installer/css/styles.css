@@ -54,13 +54,13 @@ BODY {
 .normalMenu span:before {
 	content: '○';
 	font-size: 18px;
-	margin-right: 5px;
+	margin-inline-end: 5px;
 }
 
 .passedMenu span:before {
 	content: '●';
 	font-size: 18px;
-	margin-right: 5px;
+	margin-inline-end: 5px;
 }
 
 #mainBody {
@@ -91,7 +91,7 @@ display: flex;
 }
 #mainBodyBtns a {
 	margin-inline-end: 30px;
-	color: #333;
+	color: #747474;
 	font-size: 16px;
 }
 #mainBodyBtns button {
@@ -112,4 +112,34 @@ display: flex;
 }
 #websiteURL {
 	color: #bfbfbf;
+}
+
+#mainBodyContent p {
+	line-height: 25px;
+}
+.formInput {}
+.inputLabel {
+	line-height: 40px;
+}
+.inputDiv {
+	display: flex;
+	justify-content: start;
+}
+.selectInput {
+	border: 1px solid #7f7f7f;
+	width: 350px;
+	height: 35px;
+	background: #FFF;
+	padding: 0px 5px;
+	outline: none;
+}
+
+.alert {
+	border: 1px solid;
+	padding: 10px;
+	margin: 10px auto;
+}
+.errorAlert {
+	border-color: #c00000;
+	background: #ffcccc;
 }

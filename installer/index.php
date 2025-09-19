@@ -1,11 +1,33 @@
 <?php
 #Salam!
+session_start();
 //ini_set('display_errors', true);
 include('config.php');
 include('functions.php');
-$lang = 'en';
+
+if(req('lang')) {
+	set_sess('lang', req('lang'));
+}
+
+$lang = get_lang();
 $dir = get_dir();
 $dict = get_dict();
+
+if(req('ajax')) {
+	
+}
+if(req('clevel')) {
+	if(sess('current_level') > req('clevel'))
+		set_sess('current_level', req('clevel'));
+}
+if(req('level')) {
+	$functionName = 'process_level_' . req('level');
+	if (function_exists($functionName)) {
+		$result = $functionName();
+	}
+}
+
+$clevel = get_current_level();
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>" dir="<?php echo $dir; ?>">
@@ -28,16 +50,8 @@ $dict = get_dict();
 				</div>
 				<div id="mainSideMenu">
 				<?php
-					$menuItems = array(
-						1 => get_string('salam'),
-						2 => get_string('projectinfo'),
-						3 => get_string('downloadfiles'),
-						4 => get_string('dbconnections'),
-						5 => get_string('adminuser'),
-						6 => get_string('additionalpackages'),
-						7 => get_string('bye')
-					);
-					show_menu($menuItems);
+					$menuItems = get_menu_items();
+					show_menu($menuItems, $clevel);
 				?>
 				</div>
 			</div>
@@ -45,15 +59,20 @@ $dict = get_dict();
 				<div id="mainBodyHead">
 				<?php echo $menuItems[1]; ?>
 				</div>
-				
-				<div id="mainBodyContent">
-					<p>Welcome to Salam CMS!<br>Please select language and CMS version to continue.</p>
-				</div>
-				
-				<div id="mainBodyBtns">
-					<a href="#">Back</a>
-					<button>Next</button>
-				</div>
+				<form action="" method="post" >
+					<?php 
+						show_notifications();
+					?>
+					<div id="mainBodyContent">
+						<?php echo show_body_content(); ?>
+					</div>
+					
+					<div id="mainBodyBtns">
+						<input type="hidden" name="level" value="<?php echo $clevel; ?>" >
+						<?php show_back_btn(); ?>
+						<?php show_next_btn(); ?>
+					</div>
+				</form>
 			</div>
 		</div>
 		<div id="footer">

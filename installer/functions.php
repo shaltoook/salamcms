@@ -69,10 +69,42 @@ function get_dict() {
 	return $output;
 }
 
-function get_string($key) {
+function get_string($key, $var = array()) {
 	global $dict, $lang;
 	
-	return $dict[$lang][$key] ?? '[['.$key.']]';
+	if(isset($dict[$lang][$key])) {
+		$output = $dict[$lang][$key];
+		foreach($var as $key => $val) {
+			$output = str_replace('{'.$key.'}', $val, $output);
+		}
+	} else {
+		$output = '[['.$key.']]';
+	}
+	return $output;
+}
+
+function set_sess($key, $val) {
+	$_SESSION[$key] = $val;
+}
+
+function unset_sess($key) {
+	unset($_SESSION[$key]);
+}
+
+function sess($key) {
+	return ($_SESSION[$key]) ?? false;
+}
+
+function req($key) {
+	return ($_REQUEST[$key]) ?? false;
+}
+
+function get_lang() {
+	return (sess('lang')) ? sess('lang') : 'en';
+}
+
+function get_current_level() {
+	return (sess('current_level')) ? sess('current_level') : '1';
 }
 
 function get_dir() {
@@ -81,4 +113,162 @@ function get_dir() {
 	return (in_array($lang,array('en'))) ? 'ltr' : 'rtl';
 }
 
+function get_level_1() {
+	global $lang;
+	
+	$output = '<p>'.get_string('level1note').'</p>';
+	$output .= '<div id="formWrapper">';
+	$e = new stdClass();
+	$e->type = 'select';
+	$e->label = get_string('language');
+	$e->name = 'lang';
+	$e->options = array(
+		'fa' => get_string('fa'),
+		'en' => get_string('en')
+	);
+	$e->value = $lang;
+	
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'select';
+	$e->label = get_string('cmsversion');
+	$e->name = 'version';
+	
+	$options = array();
+	$versions = get_versions();
+	foreach($versions as $version) {
+		$options[$version['id']] = $version['title'];
+	}
+	$e->options = $options;
+	
+	if(sess('version'))
+		$e->value = sess('version');
+	
+	$output .= form_input($e); 
+	$output .= '</div>';
+	echo $output;
+}
+
+function process_level_1() {
+	if(req('version')) {
+		$versions = get_versions();
+		$php_ver = $versions[req('version')]['requirement']['php'];
+		
+		if(check_php_version($php_ver)) {
+			set_sess('version', req('version'));
+			$clevel = 2;
+		} else {
+			$clevel = 1;
+		}
+		set_sess('current_level', $clevel);
+	}
+}
+
+function show_notifications() {
+	if(sess('error')) {
+		echo '<div class="alert errorAlert">';
+		echo sess('error');
+		echo '</div>';
+		unset_sess('error');
+	}
+}
+
+function get_level_2() {
+	echo 'level2';
+}
+
+function show_body_content() {
+	global $clevel;
+	
+	$functionName = 'get_level_' . $clevel;
+	if (function_exists($functionName)) {
+		$result = $functionName();
+		echo $result;
+	}
+}
+
+function form_input($e) {
+	$output = '<div class="formInput">';
+	$output .= '<div class="inputLabel">'.$e->label.'</div>';
+	$output .= '<div class="inputDiv">';
+	switch($e->type) {
+		case 'select':
+			$output .= select_input($e);
+			break;
+	}
+	$output .= '</div>';
+	$output .= '</div>';
+	
+	return $output;
+}
+
+function select_input($e) {	
+	$output = '<select name="'.$e->name.'" class="selectInput">';
+	foreach($e->options as $value => $title) {
+		$output .= '<option value="'.$value.'">'.$title.'</option>';
+	}
+	$output .= '</select>';
+	if($e->value && $e->value !='')
+		$output .= '<script>set_input_value("'.$e->name.'","'.$e->value.'")</script>';
+	
+	return $output;
+}
+
+function show_back_btn() {
+	global $clevel;
+	
+	if($clevel > 1)
+		echo '<a id="backLevel" href="?clevel='.($clevel-1).'">'.get_string('back').'</a>';
+}
+
+function show_next_btn() {
+	global $clevel;
+	
+	if($clevel < 7)
+		echo '<button type="submit" id="nextLevel">'.get_string('next').'</button>';
+}
+
+function check_php_version($php_ver) {
+	if (version_compare(PHP_VERSION, $php_ver, '>=')) {
+		return true;
+	} else {
+		set_sess('error', get_string('phpversionerror', ['v1'=>PHP_VERSION , 'v2'=>$php_ver]));
+		return false;
+	}
+}
+
+function get_versions() {
+	$versions = array();
+	#v1.0.0
+	$versions['v1'] = array(
+		'id' => 'v1',
+		'title' => 'V1.0.0',
+		'requirement' => array(
+			'php' => 7.4
+		)
+	);
+	
+	#v2.0.0
+	$versions['v2'] = array(
+		'id' => 'v2',
+		'title' => 'V2.0.0',
+		'requirement' => array(
+			'php' => 8.4
+		)
+	);
+	return $versions;
+}
+
+function get_menu_items() {
+	return array(
+		1 => get_string('salam'),
+		2 => get_string('projectinfo'),
+		3 => get_string('downloadfiles'),
+		4 => get_string('dbconnections'),
+		5 => get_string('adminuser'),
+		6 => get_string('additionalpackages'),
+		7 => get_string('bye')
+	);
+}
 ?>
