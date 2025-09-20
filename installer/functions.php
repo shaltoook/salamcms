@@ -159,8 +159,8 @@ function get_level_2() {
 	$e = new stdClass();
 	$e->type = 'text';
 	$e->label = get_string('projectname');
-	$e->name = 'project_name';
-	if(sess('project_name')) $e->value = sess('project_name');
+	$e->name = 'projectname';
+	if(sess('projectname')) $e->value = sess('projectname');
 	$output .= form_input($e); 
 	
 	$e = new stdClass();
@@ -173,21 +173,75 @@ function get_level_2() {
 	$e = new stdClass();
 	$e->type = 'text';
 	$e->label = get_string('wwwroot');
-	$e->name = 'www_root';
-	$e->value = (sess('www_root')) ?: get_www_root();
+	$e->name = 'wwwroot';
+	$e->value = (sess('wwwroot')) ?: get_www_root();
 	$e->additional = '<span class="extraLink" id="wwwrootValidator">'.get_string('validate').'</span>';
 	$output .= form_input($e); 
 	
 	$e = new stdClass();
 	$e->type = 'text';
 	$e->label = get_string('dataroot');
-	$e->name = 'data_root';
-	$e->value = (sess('data_root')) ?: get_data_root();
+	$e->name = 'dataroot';
+	$e->value = (sess('dataroot')) ?: get_data_root();
 	$e->additional = '<span class="extraLink" id="datarootValidator">'.get_string('validate').'</span>';
 	$output .= form_input($e); 
 	
 	$output .= '</div>';
 	echo $output;
+}
+
+function process_level_2() {
+	if(validate_param('projectname','url','wwwroot','dataroot')) {
+		$clevel = 3;
+	} else {
+		$clevel = 2;
+	}
+	
+	set_sess('current_level', $clevel);
+}
+
+function get_level_3() {	
+	$output = '<p>'.get_string('level3note1').'</p>';
+
+	echo $output;
+}
+
+function validate_param(...$keys) {
+    foreach ($keys as $key) {
+        if (!req($key)) {
+            set_sess('error', get_string('missedparam', ['v1' => get_string($key)]));
+            return false;
+        } else {
+			if(validate_value($key)) {
+				set_sess($key, req($key));
+			} else {
+				set_sess('error', get_string('invalidvalue', ['v1' => get_string($key)]));
+				return false;
+			}
+		}
+    }
+    return true;
+}
+
+function validate_value($key) {
+	switch($key) {
+		case 'wwwroot':
+		case 'dataroot':
+			if(is_dir(req($key))) {
+				if (is_readable(req($key))) {
+					return true;
+				}
+			}
+			break;
+		case 'url':
+			return filter_var(req($key), FILTER_VALIDATE_URL) !== false;
+			break;
+		default:
+			return true;
+			break;
+	}
+	
+	return false;
 }
 
 function show_body_content() {
@@ -267,12 +321,12 @@ function ajax_path_validator() {
 	$output['path'] = req('path');
 	if(is_dir(req('path'))) {
 		if (is_readable(req('path'))) {
-			$output['message'] = 'Path is OK.';
+			$output['message'] = get_string('pathisok');
 		} else {
-			$output['message'] = "Path is not readable.";
+			$output['message'] = get_string('pathnotreadable');
 		}
 	} else {
-		$output['message'] = 'Path is not OK.';
+		$output['message'] = get_string('pathnotok');
 	}
 	return $output;
 }

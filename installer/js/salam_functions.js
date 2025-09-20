@@ -28,6 +28,10 @@ function path_validator(path) {
 
 $(document).ready(function() {
 	$('#wwwrootValidator').click(function() {
-		path_validator($('[name=www_root]').val());
+		path_validator($('[name=wwwroot]').val());
+	});
+	
+	$('#datarootValidator').click(function() {
+		path_validator($('[name=dataroot]').val());
 	});
 });
