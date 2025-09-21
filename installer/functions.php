@@ -80,6 +80,14 @@ function get_dir() {
 	return (in_array($lang,array('en'))) ? 'ltr' : 'rtl';
 }
 
+function get_version() {
+	if(file_exists('version.php')) {
+		include('version.php');
+		return $version;
+	}
+	return false;
+}
+
 function get_level_1() {
 	global $lang;
 	
@@ -200,10 +208,112 @@ function process_level_2() {
 	set_sess('current_level', $clevel);
 }
 
-function get_level_3() {	
-	$output = '<p>'.get_string('level3note1').'</p>';
+function get_level_3() {
+	
+	$show_download_btn = true;
+	
+	if(get_version()) {
+		$output = '<p>'.get_string('level3note3').'</p>';
+	} else {
+		$checks = check_download_requirements();
+
+		if (array_sum($checks) === count($checks)) {
+			$output = '<p>'.get_string('level3note1').'</p>';
+		} else {
+			$output = '<div class="alert errorAlert">';
+			$output .= get_string('level3note2');
+			$output .= '<ul>';
+			foreach ($checks as $key => $ok) {
+				if(!$ok)
+					$output .= '<li>'.get_string('failed'.$key).'</li>';
+			}
+			$output .= '</ul>';
+			$output .= '</div>';
+			$show_download_btn = false;
+		}
+	}
+	
+	if($show_download_btn) {
+		$output .= '<div><button>Start Download</button></div>';
+	}	
 
 	echo $output;
+}
+
+function process_level_3() {
+	set_sess('current_level', 4);
+}
+
+function get_level_4() {	
+	$output = '<p>'.get_string('level4note').'</p>';
+	$output .= '<div id="formWrapper">';
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('host');
+	$e->name = 'host';
+	$e->value = (sess('host')) ?: 'localhost';
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('username');
+	$e->name = 'username';
+	if(sess('username')) $e->value = sess('username');
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('password');
+	$e->name = 'password';
+	if(sess('password')) $e->value = sess('password');
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'select';
+	$e->label = get_string('database');
+	$e->name = 'database';
+	$e->options = array();
+	if(sess('database')) $e->value = sess('database');
+	$e->additional = '<span class="extraLink" id="refreshDBList">'.get_string('refresh').'</span>';
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('prefix');
+	$e->name = 'prefix';
+	if(sess('prefix')) $e->value = sess('prefix');
+	$output .= form_input($e); 
+	
+	$output .= '</div>';
+	echo $output;
+}
+
+function check_download_requirements() {
+	$checks = [];
+	
+	$checks['curl'] = extension_loaded('curl');
+		
+	$checks['zip'] = extension_loaded('zip');
+	
+	if($checks['curl']) {
+		$host = "https://salamcms.ir";
+		
+		$ch = curl_init($host);
+		curl_setopt($ch, CURLOPT_NOBODY, true);        
+		curl_setopt($ch, CURLOPT_TIMEOUT, 5); 
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+		curl_exec($ch);
+		$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$err      = curl_errno($ch);
+
+		$checks['salamcmsir'] = ($err === 0 && $httpcode > 0);
+		curl_close($ch);
+	}
+	
+	return $checks;
 }
 
 function validate_param(...$keys) {

@@ -133,6 +133,7 @@ display: flex;
 	background: #FFF;
 	padding: 0px 5px;
 	outline: none;
+	box-sizing: inherit;
 }
 .textInput {
 	border: 1px solid #7f7f7f;
