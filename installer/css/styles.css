@@ -157,6 +157,10 @@ display: flex;
 	border-color: #c00000;
 	background: #ffcccc;
 }
+.successAlert {
+	border-color: #18c000;
+	background: #dcffcc;
+}
 
 .extraLink {
 	margin-inline-start: 20px;

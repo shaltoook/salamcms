@@ -54,6 +54,13 @@ function set_sess($key, $val) {
 	$_SESSION[$key] = $val;
 }
 
+function set_notif($content, $type = 'error') {
+	$_SESSION['notifs'][] = array(
+		'content' => $content,
+		'type' => $type
+	);
+}
+
 function unset_sess($key) {
 	unset($_SESSION[$key]);
 }
@@ -138,11 +145,11 @@ function process_level_1() {
 }
 
 function show_notifications() {
-	if(sess('error')) {
-		echo '<div class="alert errorAlert">';
-		echo sess('error');
-		echo '</div>';
-		unset_sess('error');
+	if(sess('notifs')) {
+		foreach(sess('notifs') as $notif) {
+			echo '<div class="alert '.$notif['type'].'Alert">' . $notif['content'] . '</div>';
+		}
+		unset_sess('notifs');
 	}
 }
 
@@ -250,9 +257,63 @@ function get_level_4() {
 	
 	$e = new stdClass();
 	$e->type = 'text';
-	$e->label = get_string('host');
-	$e->name = 'host';
-	$e->value = (sess('host')) ?: 'localhost';
+	$e->label = get_string('dbhost');
+	$e->name = 'dbhost';
+	$e->value = (sess('dbhost')) ?: 'localhost';
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('dbuser');
+	$e->name = 'dbuser';
+	if(sess('dbuser')) $e->value = sess('dbuser');
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('dbpass');
+	$e->name = 'dbpass';
+	if(sess('dbpass')) $e->value = sess('dbpass');
+	$e->additional = '<span class="extraLink" id="validateDBConn">'.get_string('validate').'</span>';
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('dbname');
+	$e->name = 'dbname';
+	if(sess('dbname')) $e->value = sess('dbname');
+	$output .= form_input($e); 
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('dbprefix');
+	$e->name = 'dbprefix';
+	$e->value = (sess('dbprefix')) ?: 'slm_';
+	$output .= form_input($e); 
+	
+	$output .= '</div>';
+	echo $output;
+}
+
+function process_level_4() {
+	if(validate_param('dbhost','dbuser','dbpass','dbname','dbprefix')) {
+		$clevel = 5;
+	} else {
+		$clevel = 4;
+	}
+	
+	set_sess('current_level', $clevel);
+}
+
+function get_level_5() {
+	$output = '<p>'.get_string('level5note').'</p>';
+	$output .= '<div id="formWrapper">';
+	
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('fullname');
+	$e->name = 'fullname';
+	if(sess('fullname')) $e->value = sess('fullname');
 	$output .= form_input($e); 
 	
 	$e = new stdClass();
@@ -260,33 +321,122 @@ function get_level_4() {
 	$e->label = get_string('username');
 	$e->name = 'username';
 	if(sess('username')) $e->value = sess('username');
-	$output .= form_input($e); 
-	
+	$output .= form_input($e);  
+		
 	$e = new stdClass();
 	$e->type = 'text';
 	$e->label = get_string('password');
 	$e->name = 'password';
 	if(sess('password')) $e->value = sess('password');
 	$output .= form_input($e); 
-	
-	$e = new stdClass();
-	$e->type = 'select';
-	$e->label = get_string('database');
-	$e->name = 'database';
-	$e->options = array();
-	if(sess('database')) $e->value = sess('database');
-	$e->additional = '<span class="extraLink" id="refreshDBList">'.get_string('refresh').'</span>';
-	$output .= form_input($e); 
-	
+
 	$e = new stdClass();
 	$e->type = 'text';
-	$e->label = get_string('prefix');
-	$e->name = 'prefix';
-	if(sess('prefix')) $e->value = sess('prefix');
+	$e->label = get_string('email');
+	$e->name = 'email';
+	if(sess('email')) $e->value = sess('email');
 	$output .= form_input($e); 
+
+	$e = new stdClass();
+	$e->type = 'text';
+	$e->label = get_string('mobile');
+	$e->name = 'mobile';
+	if(sess('mobile')) $e->value = sess('mobile');
+	$output .= form_input($e); 	
 	
 	$output .= '</div>';
 	echo $output;
+}
+
+function process_level_5() {
+	if(validate_param('fullname','username','password','email','mobile')) {
+		$clevel = 6;
+	} else {
+		$clevel = 5;
+	}
+	
+	if(create_db_tables()) {
+		$adminUser = [
+			"full_name"  => sess('fullname'),
+			"mobile"      => sess('mobile'),
+			"email"       => sess('email'),
+			"username"    => sess('username'),
+			"password"    => password_hash(sess('password'), PASSWORD_BCRYPT)
+		];
+		insert_admin_user($adminUser);
+		
+		generate_config_file();
+		
+		set_sess('current_level', $clevel);
+	}
+}
+
+function get_level_6() {
+	
+}
+
+function process_level_6() {
+	$clevel = 6;
+	if(admin_user_exists()) {
+		if(admin_role_exists()) {
+			$clevel = 7;
+		}
+	}
+	set_sess('current_level', $clevel);
+}
+
+function admin_role_exists($notif = true) {
+	$conn = get_db_conn();
+	if($conn) {
+		$conn->select_db(sess('dbname'));
+		$sql = "SELECT 1 FROM ".sess('dbprefix')."admin_role WHERE title = ? LIMIT 1";
+		$stmt = $conn->prepare($sql);
+
+		$title = 'admin';
+		$stmt->bind_param("s", $title);
+		$stmt->execute();
+		$stmt->store_result();
+
+		$exists = $stmt->num_rows > 0;
+
+		$stmt->close();
+		if($exists) {
+			return true;
+		} elseif($notif) {
+			set_notif(get_string('adminrolenotexists'));
+		}
+	}
+	return false;
+}
+
+function admin_user_exists($notif = true) {
+	$conn = get_db_conn();
+	if($conn) {
+		$conn->select_db(sess('dbname'));
+		$sql = "SELECT 1 FROM ".sess('dbprefix')."admin_user WHERE username = ? LIMIT 1";
+		$stmt = $conn->prepare($sql);
+
+		$username = sess('username');
+		$stmt->bind_param("s", $username);
+		$stmt->execute();
+		$stmt->store_result();
+
+		$exists = $stmt->num_rows > 0;
+
+		$stmt->close();
+		if($exists) {
+			return true;
+		} elseif($notif) {
+			set_notif(get_string('adminusernotexists'));
+		}
+	}
+	return false;
+}
+
+function get_level_7() {
+	$output = '<p>'.get_string('level7note').'</p>';
+	echo $output;
+	
 }
 
 function check_download_requirements() {
@@ -319,13 +469,13 @@ function check_download_requirements() {
 function validate_param(...$keys) {
     foreach ($keys as $key) {
         if (!req($key)) {
-            set_sess('error', get_string('missedparam', ['v1' => get_string($key)]));
+            set_notif(get_string('missedparam', ['v1' => get_string($key)]));
             return false;
         } else {
 			if(validate_value($key)) {
 				set_sess($key, req($key));
 			} else {
-				set_sess('error', get_string('invalidvalue', ['v1' => get_string($key)]));
+				set_notif(get_string('invalidvalue', ['v1' => get_string($key)]));
 				return false;
 			}
 		}
@@ -342,6 +492,18 @@ function validate_value($key) {
 					return true;
 				}
 			}
+			break;
+		case 'username':
+			return preg_match('/^[a-zA-Z][a-zA-Z0-9_]{2,19}$/', req($key));
+			break;
+		case 'mobile':
+			return preg_match('/^09[0-9]{9}$/', req($key));
+			break;
+		case 'prefix':
+			return preg_match('/^[a-zA-Z][a-zA-Z0-9_]{0,4}_$/', req($key));
+			break;
+		case 'email':
+			return filter_var(req($key), FILTER_VALIDATE_EMAIL) !== false;
 			break;
 		case 'url':
 			return filter_var(req($key), FILTER_VALIDATE_URL) !== false;
@@ -413,15 +575,18 @@ function show_back_btn() {
 function show_next_btn() {
 	global $clevel;
 	
-	if($clevel < 7)
+	if($clevel != 7) {
 		echo '<button type="submit" id="nextLevel">'.get_string('next').'</button>';
+	} else {
+		echo '<button type="button" id="finishInstall">'.get_string('finish').'</button>';
+	}
 }
 
 function check_php_version($php_ver) {
 	if (version_compare(PHP_VERSION, $php_ver, '>=')) {
 		return true;
 	} else {
-		set_sess('error', get_string('phpversionerror', ['v1'=>PHP_VERSION , 'v2'=>$php_ver]));
+		set_notif(get_string('phpversionerror', ['v1'=>PHP_VERSION , 'v2'=>$php_ver]));
 		return false;
 	}
 }
@@ -439,6 +604,182 @@ function ajax_path_validator() {
 		$output['message'] = get_string('pathnotok');
 	}
 	return $output;
+}
+
+function ajax_check_db_conn() {
+	$output = array();
+	$host = req('host');
+	$user = req('username');
+	$pass = req('password');
+	
+	if(check_db_conn($host, $user, $pass)) {
+		$output['message'] = get_string('dbconnok');
+	} else {
+		$output['message'] = get_string('nodbconn');
+		$output['has_error'] = 'yes';
+	}
+	
+	return $output;
+}
+
+function check_db_conn($host, $user, $pass) {
+	try {
+        $mysqli = @new mysqli($host, $user, $pass);
+        if ($mysqli->connect_error) {
+			return false;
+        } else {
+			return true;
+		}
+    } catch (Exception $e) {
+		return false;
+    }
+	
+	return false;
+}
+
+function get_db_conn() {
+	$host = sess('dbhost');
+	$user = sess('dbuser');
+	$pass = sess('dbpass');
+	
+	$conn = @new mysqli($host, $user, $pass);
+	if ($conn->connect_error) { 
+		return false;
+	} else {
+		return $conn;
+	}
+}
+
+function create_db_tables() {
+
+	$dbname = sess('dbname');
+	$prefix = sess('dbprefix');
+	
+	try {
+		$conn = get_db_conn();
+		if($conn) {
+			$conn->query("CREATE DATABASE IF NOT EXISTS `$dbname`");
+			$conn->select_db($dbname);
+
+			$xml_string = load_db_xml();
+			$xml = simplexml_load_string($xml_string);
+
+			foreach ($xml->table as $table) {
+				$tableName = strtolower($prefix . (string) $table['name']);
+				$columns = [];
+				$indexes = [];
+
+				foreach ($table->column as $column) {
+					$name = strtolower((string) $column['name']);
+					$type = (string) $column['type'];
+					$extra = (string) $column['extra'];
+
+					$colDef = "`$name` $type";
+					if ($extra) {
+						$colDef .= " $extra";
+					}
+					$columns[] = $colDef;
+				}
+
+				foreach ($table->index as $index) {
+					$idxName = (string) $index['name'];
+					$idxType = strtolower((string) $index['type']);
+					$idxCols = strtolower((string) $index['columns']);
+
+					if ($idxType === "unique") {
+						$indexes[] = "UNIQUE KEY `$idxName` (`$idxCols`)";
+					} else {
+						$indexes[] = "KEY `$idxName` (`$idxCols`)";
+					}
+				}
+				
+				$definitions = array_merge($columns, $indexes);
+
+				$sql = "CREATE TABLE IF NOT EXISTS `$tableName` (" . implode(", ", $definitions) . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";						
+				$conn->query($sql);
+			}
+			$conn->close();
+			
+			set_notif(get_string('dbcreated'), 'success');
+			return true;
+		}
+	} catch (Exception $e) {
+		set_notif(get_string('error', ['v1' => $e->getMessage()]));
+		return false;
+	}
+}
+
+function insert_admin_user($data) {
+	try {
+		if(!admin_user_exists(false)) {
+			$conn = get_db_conn();
+			if($conn) {
+				$conn->select_db(sess('dbname'));
+				
+				$table = sess('dbprefix') . "admin_user";
+				$sql = "INSERT INTO `$table` 
+					(full_name, mobile, email, username, password, role_ids, create_time, last_login, note, status)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+				$stmt = $conn->prepare($sql);
+				if (!$stmt) {
+					throw new Exception($conn->error);
+				}
+
+				$role_ids   = '1';
+				$create_time = date('Y-m-d H:i:s');
+				$last_login  = 0;
+				$note        = '';
+				$status      = 'active';
+
+				$stmt->bind_param(
+					"sssssssiss", 
+					$data['full_name'], 
+					$data['mobile'], 
+					$data['email'], 
+					$data['username'], 
+					$data['password'],
+					$role_ids, 
+					$create_time, 
+					$last_login, 
+					$note, 
+					$status
+				);
+
+				$stmt->execute();
+				
+				set_notif(get_string('adminusercreated'), 'success');
+			}
+		}
+	} catch (Exception $e) {
+		set_notif(get_string('error', ['v1' => $e->getMessage()]));
+		return false;
+	}
+}
+
+function generate_config_file() {
+    $config = "<?php  // SalamCMS configuration file\n\n";
+    $config .= "unset(\$CFG);\n";
+    $config .= "global \$CFG;\n";
+    $config .= "\$CFG = new stdClass();\n\n";
+
+    // Main DB settings
+    $config .= "\$CFG->dblibrary = 'native';\n";
+    $config .= "\$CFG->dbhost    = '".sess('dbhost')."';\n";
+    $config .= "\$CFG->dbname    = '".sess('dbname')."';\n";
+    $config .= "\$CFG->dbuser    = '".sess('dbuser')."';\n";
+    $config .= "\$CFG->dbpass    = '".sess('dbpass')."';\n";
+    $config .= "\$CFG->prefix    = '".sess('dbprefix')."';\n";
+   
+    // Web + data settings
+    $config .= "\$CFG->url       = '".sess('url')."';\n";
+    $config .= "\$CFG->wwwroot   = '".sess('wwwroot')."';\n";
+    $config .= "\$CFG->dataroot  = '".sess('dataroot')."';\n";
+
+    if(file_put_contents('config.php', $config)) {
+		set_notif(get_string('configfilecreated'), 'success');
+	}
+    return true;
 }
 
 function get_versions() {
@@ -470,8 +811,157 @@ function get_menu_items() {
 		3 => get_string('downloadfiles'),
 		4 => get_string('dbconnections'),
 		5 => get_string('adminuser'),
-		6 => get_string('additionalpackages'),
+		6 => get_string('install'),
 		7 => get_string('bye')
 	);
+}
+
+function generate_js_dictionary() {
+    global $dict;
+    
+    $output  = "<script>\n";
+    $output .= 'const lang = "' . sess('lang') . '";' . "\n";
+    $output .= "const strings = {\n";
+    
+    $langs = [];
+    foreach ($dict as $lang => $string) {
+        $entries = [];
+        foreach ($string as $key => $val) {
+            $entries[] = json_encode($key) . ': ' . json_encode($val);
+        }
+        $langs[] = json_encode($lang) . ': {' . implode(",\n", $entries) . '}';
+    }
+    $output .= implode(",\n", $langs);
+    
+    $output .= "\n};\n";
+    $output .= "function get_string(key) {\n";
+    $output .= "  return strings[lang][key] || '[['+key+']]';\n";
+    $output .= "}\n";
+    $output .= "</script>\n";
+    
+    echo $output;
+}
+
+function load_db_xml() {
+	$xml_string = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="slm_cms">
+  <table name="admin_user">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="full_name" type="VARCHAR(255)"/>
+    <column name="mobile" type="VARCHAR(20)"/>
+    <column name="email" type="VARCHAR(150)"/>
+    <column name="username" type="VARCHAR(100)"/>
+    <column name="password" type="VARCHAR(255)"/>
+    <column name="role_ids" type="TEXT"/>
+    <column name="create_time" type="DATETIME"/>
+    <column name="last_login" type="INT(11)"/>
+    <column name="note" type="TEXT"/>
+    <column name="status" type="VARCHAR(40)"/>
+	
+	<index name="idx_username" type="unique" columns="username"/>
+  </table>
+
+  <table name="config">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="key" type="VARCHAR(100)"/>
+    <column name="value" type="TEXT"/>
+    <column name="status" type="VARCHAR(40)"/>
+	
+	<index name="idx_key" type="unique" columns="key"/>
+  </table>
+
+  <table name="plugin">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="slug" type="VARCHAR(255)"/>
+    <column name="type" type="VARCHAR(50)"/>
+    <column name="version" type="VARCHAR(20)"/>
+    <column name="relations" type="JSON"/>
+    <column name="create_at" type="DATETIME"/>
+    <column name="status" type="VARCHAR(40)"/>
+	
+	<index name="idx_slug" type="unique" columns="slug"/>
+  </table>
+
+  <table name="plugin_config">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="plugin_id" type="INT"/>
+    <column name="key" type="VARCHAR(100)"/>
+    <column name="value" type="TEXT"/>
+    <column name="status" type="VARCHAR(40)"/>
+	
+    <index name="idx_plugin_id" type="index" columns="plugin_id"/>
+    <index name="idx_key" type="index" columns="key"/>	
+  </table>
+
+  <table name="data">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="title" type="VARCHAR(150)"/>
+    <column name="parent_id" type="INT"/>
+    <column name="value" type="TEXT"/>
+    <column name="note" type="TEXT"/>
+    <column name="data_type_id" type="INT"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+
+  <table name="data_type">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="title" type="VARCHAR(100)"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+
+  <table name="system_notification">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="type" type="VARCHAR(50)"/>
+    <column name="body" type="TEXT"/>
+    <column name="buttons" type="JSON"/>
+    <column name="create_at" type="DATETIME"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+
+  <table name="media">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="name" type="VARCHAR(150)"/>
+    <column name="tags" type="TEXT"/>
+    <column name="path" type="VARCHAR(255)"/>
+    <column name="mime_type" type="VARCHAR(100)"/>
+    <column name="size" type="INT"/>
+    <column name="password" type="VARCHAR(255)"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+
+  <table name="job">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="title" type="VARCHAR(150)"/>
+    <column name="command" type="TEXT"/>
+    <column name="schedule" type="VARCHAR(100)"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+
+  <table name="admin_role">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="title" type="VARCHAR(100)"/>
+    <column name="created_at" type="DATETIME"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+
+  <table name="admin_role_permission">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="admin_role_id" type="INT"/>
+    <column name="permission_slug" type="VARCHAR(150)"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+
+  <table name="permission">
+    <column name="id" type="INT" extra="AUTO_INCREMENT PRIMARY KEY"/>
+    <column name="slug" type="VARCHAR(150)"/>
+    <column name="section" type="VARCHAR(100)"/>
+    <column name="action" type="VARCHAR(50)"/>
+    <column name="note" type="TEXT"/>
+    <column name="status" type="VARCHAR(40)"/>
+  </table>
+</database>
+XML;
+	return $xml_string;
 }
 ?>

@@ -9,21 +9,21 @@ function load_css_files() {
 }
 
 function load_js_files() {
-	$cssDir = __DIR__ . '/js/';
-	$cssFiles = glob($cssDir . '/*.js');
+	$jsDir = __DIR__ . '/js/';
+	$jsFiles = glob($jsDir . '/*.js');
 
-	foreach ($cssFiles as $file) {
+	foreach ($jsFiles as $file) {
 		echo '<script src="js/'.basename($file).'"></script>'.PHP_EOL;
 	}
 }
 
 function get_dict() {
-	$cssDir = __DIR__ . '/lang/';
-	$cssFiles = glob($cssDir . '/*.php');
+	$langDir = __DIR__ . '/lang/';
+	$langFiles = glob($langDir . '/*.php');
 
 	$output = array();
 
-	foreach ($cssFiles as $file) {
+	foreach ($langFiles as $file) {
 		$lang = explode('.',basename($file))[0];
 		include('lang/'.basename($file));
 		$output[$lang] = $string;

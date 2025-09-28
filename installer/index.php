@@ -2,7 +2,7 @@
 #Salam!
 session_start();
 //ini_set('display_errors', true);
-include('config.php');
+include('install_config.php');
 include('functions.php');
 include('functions_local.php');
 
@@ -45,6 +45,8 @@ $clevel = get_current_level();
 	<?php load_css_files(); ?>
 	<!-- LOAD_JS_FILES_HERE -->
 	<?php load_js_files(); ?>
+	
+	<?php generate_js_dictionary(); ?>
 </head>
 <body>
 	<div id="wrapper">
